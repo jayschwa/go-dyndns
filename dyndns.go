@@ -1,4 +1,9 @@
 // Package dyndns updates dynamic DNS hostnames.
+//
+// DynDNS.org is the default service, but other services can be used if they
+// support the DNS Update API:
+//
+// http://dyn.com/support/developers/api/
 package dyndns
 
 import (
@@ -17,33 +22,42 @@ var UserAgent = "go-dyndns/0.0 (github.com/jayschwa/go-dyndns)"
 // errors maps return code text to an error.
 var errors = make(map[string]error)
 
-func Update(username, password, hostname string, ip net.IP) (net.IP, error) {
+// Update requests that user's hostname be changed to ip.
+// If ip is nil, the update server will use the client's IP address.
+// It returns the updated IP address on success and an error, if any.
+func Update(user, password, hostname string, ip net.IP) (net.IP, error) {
+
+	// Prepare HTTP request.
 	url := URL + "?hostname=" + hostname
 	if ip != nil {
 		url += "&myip=" + ip.String()
-		ip = nil
+		ip = nil // ip is reused for output.
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.SetBasicAuth(username, password)
+	req.SetBasicAuth(user, password)
 	req.Header.Add("User-Agent", UserAgent)
+
+	// Execute the request.
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	// Parse the response.
 	buf := bufio.NewReader(resp.Body)
 	code, _ := buf.ReadString(' ')
 	code = strings.TrimSpace(code)
 	info, _ := buf.ReadString(0)
-	if code == "good" || code == "nochg" {
+	if code == "good" || code == NoChange.Code {
 		ip = net.ParseIP(info)
 	}
 	err = errors[code]
 	if err == nil && code != "good" {
-		err = &Error{"invalid response", code}
+		err = &Error{"invalid response code", code}
 	}
 	return ip, err
 }
@@ -69,7 +83,7 @@ func (e *Error) Error() string {
 	return str
 }
 
-// Update protocol return codes.
+// Update protocol response codes.
 //
 // http://dyn.com/support/developers/api/return-codes/
 var (
