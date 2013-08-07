@@ -70,6 +70,7 @@ func (e *Error) Error() string {
 }
 
 // Update protocol return codes.
+//
 // http://dyn.com/support/developers/api/return-codes/
 var (
 	NoChange = NewError("nochg", "no settings changed")
