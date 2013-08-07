@@ -14,6 +14,9 @@ var URL = "https://members.dyndns.org/nic/update"
 // UserAgent identifies the client in update requests.
 var UserAgent = "go-dyndns/0.0 (github.com/jayschwa/go-dyndns)"
 
+// errors maps return code text to an error.
+var errors = make(map[string]error)
+
 func Update(username, password, hostname string, ip net.IP) (net.IP, error) {
 	url := URL + "?hostname=" + hostname
 	if ip != nil {
@@ -57,6 +60,7 @@ func NewError(code, description string) *Error {
 	return err
 }
 
+// Error satisfies the built-in error interface.
 func (e *Error) Error() string {
 	str := "dyndns: " + e.Code
 	if len(e.Description) > 0 {
@@ -65,26 +69,25 @@ func (e *Error) Error() string {
 	return str
 }
 
-// errors maps return code text to an error.
-var errors = make(map[string]error)
-
+// Update protocol return codes.
+// http://dyn.com/support/developers/api/return-codes/
 var (
-	ErrNoChange = NewError("nochg", "no settings changed")
+	NoChange = NewError("nochg", "no settings changed")
 
-	// Account errors
+	// Account errors.
 	ErrAuth    = NewError("badauth", "bad username or password")
 	ErrDonator = NewError("!donator", "option available only to credited users")
 
-	// Hostname errors
+	// Hostname errors.
 	ErrDomain  = NewError("notfqdn", "hostname is not a fully-qualified domain name")
 	ErrNoHost  = NewError("nohost", "hostname does not exist in this account")
 	ErrNumHost = NewError("numhost", "too many hosts")
 	ErrAbuse   = NewError("abuse", "hostname blocked for update abuse")
 
-	// Agent errors
+	// User agent errors.
 	ErrAgent = NewError("badagent", "bad user agent or http method")
 
-	// Server errors
+	// Server errors.
 	ErrDns = NewError("dnserror", "dns error")
-	Err911 = NewError("911", "problem or scheduled maintenance")
+	Err911 = NewError("911", "server problem or scheduled maintenance")
 )
