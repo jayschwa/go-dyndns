@@ -1,3 +1,4 @@
+// Package dyndns updates dynamic DNS hostnames.
 package dyndns
 
 import (
@@ -7,46 +8,11 @@ import (
 	"strings"
 )
 
-const URL = "https://members.dyndns.org/nic/update"
+// URL specifies where to send update requests.
+var URL = "https://members.dyndns.org/nic/update"
 
-var UserAgent = "Go DynDNS package v0.0.0 jay@jayschwa.net"
-
-var errors = make(map[string]error)
-
-type Error struct {
-	Code, Description string
-}
-
-func (e *Error) Error() string {
-	str := "dyndns: " + e.Code
-	if len(e.Description) > 0 {
-		str += ": " + e.Description
-	}
-	return str
-}
-
-func NewError(code, description string) error {
-	err := &Error{code, description}
-	errors[code] = err
-	return err
-}
-
-var (
-	ErrNoChange = NewError("nochg", "no settings changed")
-
-	ErrAuth    = NewError("badauth", "bad username or password")
-	ErrDonator = NewError("!donator", "option available only to credited users")
-
-	ErrDomain  = NewError("notfqdn", "hostname is not a fully-qualified domain name")
-	ErrNoHost  = NewError("nohost", "hostname does not exist in this account")
-	ErrNumHost = NewError("numhost", "too many hosts")
-	ErrAbuse   = NewError("abuse", "hostname blocked for update abuse")
-
-	ErrAgent = NewError("badagent", "bad user agent or http method")
-
-	ErrDns = NewError("dnserror", "dns error")
-	Err911 = NewError("911", "problem or scheduled maintenance")
-)
+// UserAgent identifies the client in update requests.
+var UserAgent = "go-dyndns/0.0 (github.com/jayschwa/go-dyndns)"
 
 func Update(username, password, hostname string, ip net.IP) (net.IP, error) {
 	url := URL + "?hostname=" + hostname
@@ -78,3 +44,46 @@ func Update(username, password, hostname string, ip net.IP) (net.IP, error) {
 	}
 	return ip, err
 }
+
+// Update protocol errors.
+type Error struct {
+	Code, Description string
+}
+
+func NewError(code, description string) error {
+	err := &Error{code, description}
+	errors[code] = err
+	return err
+}
+
+func (e *Error) Error() string {
+	str := "dyndns: " + e.Code
+	if len(e.Description) > 0 {
+		str += ": " + e.Description
+	}
+	return str
+}
+
+// errors maps return code text to an error.
+var errors = make(map[string]error)
+
+var (
+	ErrNoChange = NewError("nochg", "no settings changed")
+
+	// Account errors
+	ErrAuth    = NewError("badauth", "bad username or password")
+	ErrDonator = NewError("!donator", "option available only to credited users")
+
+	// Hostname errors
+	ErrDomain  = NewError("notfqdn", "hostname is not a fully-qualified domain name")
+	ErrNoHost  = NewError("nohost", "hostname does not exist in this account")
+	ErrNumHost = NewError("numhost", "too many hosts")
+	ErrAbuse   = NewError("abuse", "hostname blocked for update abuse")
+
+	// Agent errors
+	ErrAgent = NewError("badagent", "bad user agent or http method")
+
+	// Server errors
+	ErrDns = NewError("dnserror", "dns error")
+	Err911 = NewError("911", "problem or scheduled maintenance")
+)
