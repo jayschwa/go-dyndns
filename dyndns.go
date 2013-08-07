@@ -50,7 +50,8 @@ type Error struct {
 	Code, Description string
 }
 
-func NewError(code, description string) error {
+// NewError returns a new Error from a return code and description.
+func NewError(code, description string) *Error {
 	err := &Error{code, description}
 	errors[code] = err
 	return err
