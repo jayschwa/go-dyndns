@@ -11,7 +11,7 @@ const (
 )
 
 func TestGood(t *testing.T) {
-	ip, err := Update(username, password, hostname, nil)
+	ip, err := Service{DynDNS, username, password}.Update(hostname, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -19,12 +19,12 @@ func TestGood(t *testing.T) {
 }
 
 func TestBadAuth(t *testing.T) {
-	ip, err := Update("bogus", password, hostname, nil)
+	ip, err := Service{DynDNS, "bogus", password}.Update(hostname, nil)
 	if err != ErrAuth {
 		t.Error(err)
 	}
 	t.Log(ip)
-	ip, err = Update(username, "bogus", hostname, nil)
+	ip, err = Service{DynDNS, username, "bogus"}.Update(hostname, nil)
 	if err != ErrAuth {
 		t.Error(err)
 	}
@@ -32,7 +32,7 @@ func TestBadAuth(t *testing.T) {
 }
 
 func TestBadDomain(t *testing.T) {
-	ip, err := Update(username, password, "test", nil)
+	ip, err := Service{DynDNS, username, password}.Update("bogus", nil)
 	if err != ErrDomain {
 		t.Error(err)
 	}
@@ -40,7 +40,7 @@ func TestBadDomain(t *testing.T) {
 }
 
 func TestNoHost(t *testing.T) {
-	ip, err := Update(username, password, "test.com", nil)
+	ip, err := Service{DynDNS, username, password}.Update("bogus.com", nil)
 	if err != ErrNoHost {
 		t.Error(err)
 	}

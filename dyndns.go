@@ -1,7 +1,5 @@
-// Package dyndns updates dynamic DNS hostnames.
-//
-// DynDNS.org is the default service, but other services can be used if they
-// support the DNS Update API:
+// Package dyndns updates dynamic DNS hostnames. It can be used with services
+// that support the DNS Update API:
 //
 // http://dyn.com/support/developers/api/
 package dyndns
@@ -13,22 +11,21 @@ import (
 	"strings"
 )
 
-// URL specifies where to send update requests.
-var URL = "https://members.dyndns.org/nic/update"
-
 // UserAgent identifies the client in update requests.
 var UserAgent = "go-dyndns/0.0 (github.com/jayschwa/go-dyndns)"
 
-// errors maps return code text to an error.
-var errors = make(map[string]error)
+// A Service represents a dynamic DNS service and its account credentials.
+type Service struct {
+	URL, Username, Password string
+}
 
-// Update requests that user's hostname be changed to ip.
+// Update sends a request to the service to change the hostname to ip.
 // If ip is nil, the update server will use the client's IP address.
 // It returns the updated IP address on success and an error, if any.
-func Update(user, password, hostname string, ip net.IP) (net.IP, error) {
+func (s Service) Update(hostname string, ip net.IP) (net.IP, error) {
 
 	// Prepare HTTP request.
-	url := URL + "?hostname=" + hostname
+	url := s.URL + "?hostname=" + hostname
 	if ip != nil {
 		url += "&myip=" + ip.String()
 		ip = nil // ip is reused for output.
@@ -37,7 +34,7 @@ func Update(user, password, hostname string, ip net.IP) (net.IP, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.SetBasicAuth(user, password)
+	req.SetBasicAuth(s.Username, s.Password)
 	req.Header.Add("User-Agent", UserAgent)
 
 	// Execute the request.
@@ -61,6 +58,9 @@ func Update(user, password, hostname string, ip net.IP) (net.IP, error) {
 	}
 	return ip, err
 }
+
+// errors maps return code text to an error.
+var errors = make(map[string]error)
 
 // Update protocol errors.
 type Error struct {
